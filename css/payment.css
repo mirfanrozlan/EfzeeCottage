@@ -1,0 +1,154 @@
+.payment-method-select {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.payment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.payment-option {
+  flex: 1;
+  min-width: 200px;
+  padding: 15px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.payment-option:hover {
+  border-color: #0d6efd;
+  background-color: #f8f9fa;
+}
+
+.payment-option input[type="radio"] {
+  margin-right: 10px;
+}
+
+.payment-option i {
+  font-size: 1.5em;
+  color: #0d6efd;
+}
+
+.payment-option span {
+  font-size: 1.1em;
+}
+
+.payment-option input[type="radio"]:checked + i + span {
+  font-weight: bold;
+}
+
+.payment-option input[type="radio"]:checked + i {
+  color: #0d6efd;
+}
+
+.qr-payment-section {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.qr-code-container {
+  margin: 20px auto;
+  max-width: 300px;
+}
+
+.qr-code-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.receipt-upload {
+  margin-top: 20px;
+  padding: 20px;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.receipt-input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.receipt-note {
+  color: #6c757d;
+  font-size: 0.9em;
+  margin-top: 10px;
+}
+
+/* Admin Check Payment Styles */
+.receipt-preview {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.receipt-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.approval-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.status-pending {
+  background-color: #ffd700;
+  color: #000;
+}
+
+.status-approved {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.status-rejected {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .payment-option {
+    min-width: 100%;
+  }
+
+  .qr-code-container {
+    max-width: 250px;
+  }
+
+  .receipt-upload {
+    padding: 15px;
+  }
+}
