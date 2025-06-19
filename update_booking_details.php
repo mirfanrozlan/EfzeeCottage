@@ -19,6 +19,8 @@ $stmt->bind_param('si', $status, $booking_id);
 $stmt->execute();
 
 if ($stmt->affected_rows > 0) {
+    require 'vendor/autoload.php';
+
     // Fetch user email and name for sending notification
     $user_query = "SELECT u.email, u.name FROM users u JOIN bookings b ON u.user_id = b.user_id WHERE b.booking_id = ?";
     $user_stmt = $conn->prepare($user_query);
@@ -32,18 +34,37 @@ if ($stmt->affected_rows > 0) {
         $message = '';
         if ($status === 'confirmed') {
             $subject = 'Booking Payment Confirmed';
-            $message = "Dear $name,\n\nYour booking payment has been confirmed. Thank you for choosing our service.\n\nBest regards,\nEFZEE COTTAGE";
+            $message = "Dear $name,<br><br>Your booking payment has been confirmed. Thank you for choosing our service.<br><br>Best regards,<br>EFZEE COTTAGE";
         } elseif ($status === 'cancelled') {
             $subject = 'Booking Payment Rejected';
-            $message = "Dear $name,\n\nUnfortunately, your booking payment has been rejected. Please contact us for further assistance.\n\nBest regards,\nEFZEE COTTAGE";
+            $message = "Dear $name,<br><br>Unfortunately, your booking payment has been rejected. Please contact us for further assistance.<br><br>Best regards,<br>EFZEE COTTAGE";
         } else {
             // For other statuses, no email sent
             $subject = '';
             $message = '';
         }
         if ($subject && $message) {
-            $headers = "From: no-reply@efzeecottage.com\r\n";
-            mail($to, $subject, $message, $headers);
+            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+            try {
+                //Server settings
+                $mail->isSMTP();
+                $mail->Host = 'localhost';
+                $mail->Port = 25;
+                $mail->SMTPAuth = false;
+
+                //Recipients
+                $mail->setFrom('no-reply@efzeecottage.com', 'EFZEE COTTAGE');
+                $mail->addAddress($to, $name);
+
+                //Content
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $message;
+
+                $mail->send();
+            } catch (Exception $e) {
+                error_log('Mailer Error: ' . $mail->ErrorInfo);
+            }
         }
     }
     echo json_encode(['success' => true]);
