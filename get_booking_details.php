@@ -161,6 +161,6 @@ $payment_date = $booking['payment_date'] ? date('M j, Y', strtotime($booking['pa
     }
 
     function rejectPayment(bookingId) {
-        updateBookingStatus(bookingId, 'pending');
+        updateBookingStatus(bookingId, 'cancelled');
     }
 </script>
