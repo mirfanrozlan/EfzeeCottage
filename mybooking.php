@@ -216,13 +216,36 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                         </div>
                     </div>
 
-                    <?php if ($booking['status'] !== 'cancelled'):
+                    <?php 
+                    // Check if booking is completed and if user has already reviewed
+                    $review_query = "SELECT review_id, status FROM reviews WHERE booking_id = ? LIMIT 1";
+                    $review_stmt = $conn->prepare($review_query);
+                    $review_stmt->bind_param("i", $booking['booking_id']);
+                    $review_stmt->execute();
+                    $review_result = $review_stmt->get_result();
+                    $existing_review = $review_result->fetch_assoc();
+
+                    if ($booking['status'] !== 'cancelled'):
                         $check_in_date = new DateTime($booking['check_in_date']);
                         $current_date = new DateTime();
                         $hours_difference = ($check_in_date->getTimestamp() - $current_date->getTimestamp()) / 3600;
                         $can_cancel = $hours_difference >= 24;
+                        $is_completed = $booking['status'] === 'completed';
                         ?>
                         <div class="booking-actions">
+                            <?php if ($is_completed): ?>
+                                <?php if (!$existing_review): ?>
+                                    <button type="button" class="btn btn-primary" onclick="openReviewModal(<?php echo $booking['booking_id']; ?>, '<?php echo htmlspecialchars($booking['homestay_name']); ?>', <?php echo $booking['homestay_id']; ?>)">
+                                        <i class="fas fa-star"></i> Write Review
+                                    </button>
+                                <?php else: ?>
+                                    <div class="review-status">
+                                        <i class="fas fa-check-circle"></i> 
+                                        Review <?php echo ucfirst($existing_review['status']); ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
                             <?php if ($can_cancel): ?>
                                 <form action="mybooking.php" method="POST">
                                     <input type="hidden" name="action" value="cancel_booking">
@@ -248,8 +271,176 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
         <?php endif; ?>
     </div>
 
+    <!-- Review Modal -->
+    <div class="modal" id="reviewModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeReviewModal()">&times;</span>
+            <h2>Write a Review</h2>
+            <form id="reviewForm">
+                <input type="hidden" id="booking_id" name="booking_id">
+                <input type="hidden" id="homestay_id" name="homestay_id">
+                
+                <div class="form-group">
+                    <label>Homestay:</label>
+                    <div id="homestayName" class="homestay-name"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Rating:</label>
+                    <div class="star-rating">
+                        <?php for ($i = 5; $i >= 1; $i--): ?>
+                            <input type="radio" name="rating" value="<?php echo $i; ?>" id="star<?php echo $i; ?>" required>
+                            <label for="star<?php echo $i; ?>"><i class="fas fa-star"></i></label>
+                        <?php endfor; ?>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comment">Your Review:</label>
+                    <textarea id="comment" name="comment" rows="4" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Star Rating Styles */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            cursor: pointer;
+            padding: 5px;
+            color: #ddd;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input:checked ~ label {
+            color: #ffc107;
+        }
+
+        /* Review Status Styles */
+        .review-status {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            color: #495057;
+        }
+
+        .review-status i {
+            color: #28a745;
+            margin-right: 5px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .homestay-name {
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+    </style>
+
     <script>
-        // Mobile Menu Toggle
+        // Review Modal Functions
+        function openReviewModal(bookingId, homestayName, homestayId) {
+            document.getElementById('booking_id').value = bookingId;
+            document.getElementById('homestay_id').value = homestayId;
+            document.getElementById('homestayName').textContent = homestayName;
+            document.getElementById('reviewModal').style.display = 'block';
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+            document.getElementById('reviewForm').reset();
+        }
+
+        // Handle Review Form Submission
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('submit_review.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Review submitted successfully!');
+                    closeReviewModal();
+                    location.reload(); // Reload page to update review status
+                } else {
+                    alert(data.message || 'Failed to submit review');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the review');
+            });
+        });
+
+        // Existing scripts
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const navLinks = document.getElementById('navLinks');
 
@@ -259,13 +450,11 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                 '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
         });
 
-        // Navbar Scroll Effect
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('navbar');
             navbar.classList.toggle('scrolled', window.scrollY > 50);
         });
 
-        // Simple confirmation for cancellation
         document.querySelectorAll('.btn-danger').forEach(button => {
             button.addEventListener('click', function (e) {
                 if (!confirm('Are you sure you want to cancel this booking?')) {
@@ -274,13 +463,19 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
             });
         });
 
-        // Close mobile menu when clicking on links
         document.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', () => {
                 navLinks.classList.remove('active');
                 mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
             });
         });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('reviewModal')) {
+                closeReviewModal();
+            }
+        }
     </script>
 </body>
 
