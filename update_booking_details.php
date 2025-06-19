@@ -47,10 +47,14 @@ if ($stmt->affected_rows > 0) {
             $mail = new PHPMailer\PHPMailer\PHPMailer(true);
             try {
                 //Server settings
-                $mail->isSMTP();
-                $mail->Host = 'localhost';
-                $mail->Port = 25;
-                $mail->SMTPAuth = false;
+$mail->isSMTP();
+// Update the following SMTP settings to your SMTP server details
+$mail->Host = 'smtp.example.com'; // e.g., smtp.gmail.com
+$mail->SMTPAuth = true;
+$mail->Username = 'your_email@example.com'; // SMTP username
+$mail->Password = 'your_email_password'; // SMTP password
+$mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS; // or PHPMailer::ENCRYPTION_SMTPS
+$mail->Port = 587;
 
                 //Recipients
                 $mail->setFrom('no-reply@efzeecottage.com', 'EFZEE COTTAGE');
@@ -62,9 +66,11 @@ if ($stmt->affected_rows > 0) {
                 $mail->Body    = $message;
 
                 $mail->send();
-            } catch (Exception $e) {
-                error_log('Mailer Error: ' . $mail->ErrorInfo);
-            }
+} catch (Exception $e) {
+    error_log('Mailer Error: ' . $mail->ErrorInfo);
+    // Optionally, you can return the error message in the JSON response for debugging
+    // echo json_encode(['success' => false, 'message' => 'Mailer Error: ' . $mail->ErrorInfo]);
+}
         }
     }
     echo json_encode(['success' => true]);
