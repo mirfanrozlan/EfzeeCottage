@@ -30,13 +30,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Check if user has completed a booking for this homestay
-    $bookingCheck = $conn->prepare("SELECT booking_id FROM bookings WHERE user_id = ? AND homestay_id = ? AND status = 'completed' LIMIT 1");
+    $bookingCheck = $conn->prepare("SELECT booking_id 
+        FROM bookings 
+        WHERE user_id = ? 
+        AND homestay_id = ? 
+        AND (status = 'completed' OR check_out_date <= NOW())
+        LIMIT 1");
     $bookingCheck->bind_param('ii', $user_id, $homestay_id);
     $bookingCheck->execute();
     $bookingResult = $bookingCheck->get_result();
 
     if ($bookingResult->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'You can only review homestays you have stayed at']);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Reviews allowed after stay completion. Contact us if your stay has ended.'
+        ]);
         exit;
     }
 
