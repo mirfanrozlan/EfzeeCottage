@@ -6,7 +6,7 @@
             <button class="tab-btn" data-tab="signup">Sign Up</button>
         </div>
         <!-- Login Form -->
-        <form id="loginForm" class="auth-form" method="POST" action="">
+        <form id="loginForm" class="auth-form" method="POST" action="include/login_signup.php">
             <input type="email" name="email" placeholder="Email Address" required>
             <input type="password" name="password" placeholder="Password" required>
             <input type="hidden" name="action" value="login">
@@ -14,7 +14,7 @@
         </form>
 
         <!-- Sign Up Form -->
-        <form id="signupForm" class="auth-form" style="display: none;" method="POST" action="">
+        <form id="signupForm" class="auth-form" style="display: none;" method="POST" action="include/login_signup.php">
             <input type="text" name="name" placeholder="Full Name" required>
             <input type="email" name="email" placeholder="Email Address" required>
             <input type="password" name="password" placeholder="Create Password" required>
