@@ -1,4 +1,5 @@
 <?php
+
 $login_error = '';
 $signup_error = '';
 

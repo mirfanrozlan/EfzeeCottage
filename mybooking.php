@@ -91,6 +91,8 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="css/mybooking.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/navbar.js" defer></script>
 </head>
 
 <body>
@@ -189,34 +191,6 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Review Form -->
-                    <?php if ($booking['status'] === 'confirmed'): ?>
-                    <div class="review-section">
-                        <h3>Write a Review</h3>
-                        <form class="review-form" action="submit_review.php" method="POST">
-                            <input type="hidden" name="homestay_id" value="<?php echo $booking['homestay_id']; ?>">
-                            
-                            <div class="star-rating">
-                                <span>Rating:</span>
-                                <div class="stars">
-                                    <?php for ($i = 5; $i >= 1; $i--): ?>
-                                    <input type="radio" id="star<?php echo $i; ?>-<?php echo $booking['booking_id']; ?>" name="rating" value="<?php echo $i; ?>" required>
-                                    <label for="star<?php echo $i; ?>-<?php echo $booking['booking_id']; ?>" title="<?php echo $i; ?> stars"><i class="fas fa-star"></i></label>
-                                    <?php endfor; ?>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <textarea name="comment" placeholder="Share your experience..." required></textarea>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Submit Review
-                            </button>
-                        </form>
-                    </div>
-                    <?php endif; ?>
-
                     <div class="payment-info">
                         <div class="payment-title">
                             <i class="fas fa-credit-card"></i> Payment Information
@@ -301,133 +275,66 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
     </div>
 
     <!-- Review Modal -->
-    <div class="modal" id="reviewModal">
+    <div id="reviewModal" class="modal" role="dialog" aria-labelledby="reviewModalTitle" aria-modal="true">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeReviewModal()">&times;</span>
-            <h2>Write a Review</h2>
-            <form id="reviewForm">
-                <input type="hidden" id="booking_id" name="booking_id">
-                <input type="hidden" id="homestay_id" name="homestay_id">
+            <div class="modal-header">
+                <h2 id="reviewModalTitle">Write a Review</h2>
+                <button type="button" class="close" onclick="closeReviewModal()" aria-label="Close">&times;</button>
+            </div>
 
-                <div class="form-group">
-                    <label>Homestay:</label>
-                    <div id="homestayName" class="homestay-name"></div>
-                </div>
+            <div class="modal-body">
+                <p class="homestay-name">Reviewing for: <strong><span id="homestayName"></span></strong></p>
 
-                <div class="form-group">
-                    <label>Rating:</label>
-                    <div class="star-rating">
-                        <?php for ($i = 5; $i >= 1; $i--): ?>
-                            <input type="radio" name="rating" value="<?php echo $i; ?>" id="star<?php echo $i; ?>" required>
-                            <label for="star<?php echo $i; ?>"><i class="fas fa-star"></i></label>
-                        <?php endfor; ?>
+                <form id="reviewForm" novalidate>
+                    <input type="hidden" id="booking_id" name="booking_id">
+                    <input type="hidden" id="homestay_id" name="homestay_id">
+
+                    <div class="form-group">
+                        <label id="ratingLabel">Rating:</label>
+                        <div class="star-rating" role="group" aria-labelledby="ratingLabel">
+                            <div class="stars">
+                                <?php for ($i = 5; $i >= 1; $i--): ?>
+                                    <input type="radio" id="modalStar<?php echo $i; ?>" name="ratings"
+                                        value="<?php echo $i; ?>" required
+                                        aria-label="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">
+                                    <label for="modalStar<?php echo $i; ?>"
+                                        title="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">
+                                        <i class="fas fa-star"></i>
+                                    </label>
+                                <?php endfor; ?>
+                            </div>
+                            <div class="rating-text" aria-live="polite"></div>
+                            <div class="invalid-feedback">Please select a rating.</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="comment">Your Review:</label>
-                    <textarea id="comment" name="comment" rows="4" required></textarea>
-                </div>
+                    <div class="form-group">
+                        <label for="modalComment">Your Review:</label>
+                        <textarea id="modalComment" name="comment" placeholder="Share your experience..." required
+                            minlength="10" aria-describedby="commentHelp"></textarea>
+                        <small id="commentHelp" class="form-text text-muted">Minimum 10 characters required.</small>
+                        <div class="invalid-feedback">Please write a review (minimum 10 characters).</div>
+                    </div>
 
-                <button type="submit" class="btn btn-primary">Submit Review</button>
-            </form>
+                    <div class="alert alert-success" style="display: none;" role="alert">
+                        <i class="fas fa-check-circle"></i> Review submitted successfully!
+                    </div>
+                    <div class="alert alert-danger" style="display: none;" role="alert"></div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Submit Review
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <style>
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
 
-        .modal-content {
-            position: relative;
-            background-color: #fff;
-            margin: 15% auto;
-            padding: 20px;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .close-modal {
-            position: absolute;
-            right: 20px;
-            top: 10px;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        /* Star Rating Styles */
-        .star-rating {
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: flex-end;
-        }
-
-        .star-rating input {
-            display: none;
-        }
-
-        .star-rating label {
-            cursor: pointer;
-            padding: 5px;
-            color: #ddd;
-        }
-
-        .star-rating label:hover,
-        .star-rating label:hover~label,
-        .star-rating input:checked~label {
-            color: #ffc107;
-        }
-
-        /* Review Status Styles */
-        .review-status {
-            display: inline-block;
-            padding: 8px 12px;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            color: #495057;
-        }
-
-        .review-status i {
-            color: #28a745;
-            margin-right: 5px;
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .homestay-name {
-            padding: 8px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-        }
-    </style>
 
     <script>
         // Review Modal Functions
@@ -447,7 +354,56 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
         document.getElementById('reviewForm').addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const formData = new FormData(this);
+            // Get the rating value
+            const rating = document.querySelector('input[name="ratings"]:checked');
+            const comment = document.getElementById('modalComment').value.trim();
+
+            // Validate form
+            let isValid = true;
+
+            // Check rating
+            const ratingFeedback = document.querySelector('.star-rating .invalid-feedback');
+            if (!rating) {
+                if (ratingFeedback) ratingFeedback.style.display = 'block';
+                isValid = false;
+            } else {
+                if (ratingFeedback) ratingFeedback.style.display = 'none';
+            }
+
+            // Check comment
+            const commentInput = document.querySelector('#modalComment');
+            const commentFeedback = document.querySelector('#modalComment + .invalid-feedback');
+            if (!comment || comment.length < 10) {
+                if (commentInput) commentInput.classList.add('is-invalid');
+                if (commentFeedback) commentFeedback.style.display = 'block';
+                isValid = false;
+            } else {
+                if (commentInput) commentInput.classList.remove('is-invalid');
+                if (commentFeedback) commentFeedback.style.display = 'none';
+            }
+
+            if (!isValid) {
+                return;
+            }
+
+            // Create FormData and explicitly add the rating value
+            const formData = new FormData();
+            formData.append('booking_id', document.getElementById('booking_id').value);
+            formData.append('homestay_id', document.getElementById('homestay_id').value);
+            formData.append('ratings', rating.value); // Ensure rating is included
+            formData.append('comment', comment);
+
+            const submitButton = this.querySelector('button[type="submit"]');
+            const alertSuccess = document.querySelector('.alert-success');
+            const alertDanger = document.querySelector('.alert-danger');
+
+            // Disable submit button and show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            // Hide any existing alerts
+            alertSuccess.style.display = 'none';
+            alertDanger.style.display = 'none';
 
             fetch('submit_review.php', {
                 method: 'POST',
@@ -456,16 +412,24 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Review submitted successfully!');
-                        closeReviewModal();
-                        location.reload(); // Reload page to update review status
+                        alertSuccess.style.display = 'block';
+                        setTimeout(() => {
+                            closeReviewModal();
+                            location.reload(); // Reload page to update review status
+                        }, 1500);
                     } else {
-                        alert(data.message || 'Failed to submit review');
+                        alertDanger.textContent = data.message || 'Failed to submit review';
+                        alertDanger.style.display = 'block';
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Review';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while submitting the review');
+                    alertDanger.textContent = 'An error occurred while submitting the review';
+                    alertDanger.style.display = 'block';
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Review';
                 });
         });
 

@@ -10,7 +10,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 
 // Get booking ID and status
 $booking_id = filter_input(INPUT_POST, 'booking_id', FILTER_VALIDATE_INT);
-$status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+$status = filter_input(INPUT_POST, 'status');
 
 if ($booking_id === false || $status === null) {
     echo json_encode(['success' => false, 'message' => 'Invalid input']);

@@ -160,12 +160,6 @@ $stmt->close();
                             ?>
                         </div>
                     </div>
-
-                    <div class="calendar-legend mt-3">
-                        <div class="legend-item"><span class="legend-color available"></span> Available</div>
-                        <div class="legend-item"><span class="legend-color booked"></span> Booked</div>
-                        <div class="legend-item"><span class="legend-color past"></span> Past</div>
-                    </div>
                 </div>
             <?php else: ?>
                 <div class="alert alert-info mt-3">
@@ -173,97 +167,106 @@ $stmt->close();
                 </div>
             <?php endif; ?>
 
-            <!-- Booking Form -->
-            <form id="bookingForm" class="booking-form" method="POST" action="process/process_booking.php"
-                enctype="multipart/form-data">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Check-in Date <span class="text-danger">*</span></label>
-                        <input type="date" name="check_in_date" id="checkInDate" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Check-out Date <span class="text-danger">*</span></label>
-                        <input type="date" name="check_out_date" id="checkOutDate" class="form-control" required>
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Number of Guests</label>
-                        <input type="number" name="total_guests" id="totalGuests" min="1" max="10" required
-                            oninput="validateGuests(this)">
-                        <div id="guestError" class="error-message"
-                            style="display: none; color: red; font-size: 0.8em; margin-top: 5px;"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Homestay</label>
-                        <select name="homestay_id" id="homestaySelect" required>
-                            <option value="" disabled selected>Select Homestay</option>
-                            <?php
-                            $homestaysQuery = "SELECT * FROM homestays WHERE status = 'available' ORDER BY name";
-                            $homestaysResult = $conn->query($homestaysQuery);
-                            while ($homestay = $homestaysResult->fetch_assoc()):
-                                ?>
-                                <option value="<?= $homestay['homestay_id'] ?>"
-                                    data-price="<?= $homestay['price_per_night'] ?>"
-                                    data-max-guests="<?= $homestay['max_guests'] ?>">
-                                    <?= htmlspecialchars($homestay['name']) ?> -
-                                    RM<?= number_format($homestay['price_per_night'], 2) ?>/night
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="price-breakdown">
-                    <h3>Price Breakdown</h3>
-                    <div class="price-row">
-                        <span>Base Rate (per night):</span>
-                        <span id="baseRate">RM 0.00</span>
-                    </div>
-                    <div class="price-row">
-                        <span>Number of Nights:</span>
-                        <span id="numberOfNights">0</span>
+            <?php if ($user_id): ?>
+                <!-- Booking Form -->
+                <form id="bookingForm" class="booking-form" method="POST" action="process/process_booking.php"
+                    enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Check-in Date <span class="text-danger">*</span></label>
+                            <input type="date" name="check_in_date" id="checkInDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Check-out Date <span class="text-danger">*</span></label>
+                            <input type="date" name="check_out_date" id="checkOutDate" class="form-control" required>
+                        </div>
                     </div>
 
-                    <div class="price-row subtotal-row">
-                        <span>Subtotal:</span>
-                        <span id="subtotal">RM 0.00</span>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Number of Guests</label>
+                            <input type="number" name="total_guests" id="totalGuests" min="1" max="10" required
+                                oninput="validateGuests(this)">
+                            <div id="guestError" class="error-message"
+                                style="display: none; color: red; font-size: 0.8em; margin-top: 5px;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Homestay</label>
+                            <select name="homestay_id" id="homestaySelect" required>
+                                <option value="" disabled selected>Select Homestay</option>
+                                <?php
+                                $homestaysQuery = "SELECT * FROM homestays WHERE status = 'available' ORDER BY name";
+                                $homestaysResult = $conn->query($homestaysQuery);
+                                while ($homestay = $homestaysResult->fetch_assoc()):
+                                    ?>
+                                    <option value="<?= $homestay['homestay_id'] ?>"
+                                        data-price="<?= $homestay['price_per_night'] ?>"
+                                        data-max-guests="<?= $homestay['max_guests'] ?>">
+                                        <?= htmlspecialchars($homestay['name']) ?> -
+                                        RM<?= number_format($homestay['price_per_night'], 2) ?>/night
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="price-row returning-discount-row" style="display: none;">
-                        <span><i class="fas fa-tag"></i> Returning Customer Discount:</span>
-                        <span id="returningDiscountAmount">-RM 20.00</span>
+                    <div class="price-breakdown">
+                        <h3>Price Breakdown</h3>
+                        <div class="price-row">
+                            <span>Base Rate (per night):</span>
+                            <span id="baseRate">RM 0.00</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Number of Nights:</span>
+                            <span id="numberOfNights">0</span>
+                        </div>
+
+                        <div class="price-row subtotal-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">RM 0.00</span>
+                        </div>
+
+                        <div class="price-row returning-discount-row" style="display: none;">
+                            <span><i class="fas fa-tag"></i> Returning Customer Discount:</span>
+                            <span id="returningDiscountAmount">-RM 20.00</span>
+                        </div>
+
+                        <div class="price-row total-row">
+                            <span><strong>Total:</strong></span>
+                            <span id="totalPrice"><strong>RM 0.00</strong></span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="total_price" id="totalPriceInput" value="0.00">
+
+                    <div id="qrPaymentSection">
+                        <h3>Scan QR Code to Pay</h3>
+                        <div class="qr-code-container">
+                            <img src="assets/images/payment_qr.jpg" alt="Payment QR Code" class="qr-code-image"
+                                style="width: 200px; height: auto; border: 2px solid #4CAF50; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.2s;"
+                                onmouseover="this.style.transform='scale(1.05)'"
+                                onmouseout="this.style.transform='scale(1)'">
+
+                        </div>
+                        <div class="receipt-upload">
+                            <h4>Upload Payment Receipt</h4>
+                            <input type="file" name="payment_receipt" id="paymentReceipt" accept="image/*,.pdf"
+                                class="receipt-input" required>
+                            <div id="fileError" class="error-message"
+                                style="display: none; color: red; font-size: 0.8em; margin-top: 5px;"></div>
+                            <p class="receipt-note">Please upload your payment receipt (Image or PDF, max 5MB)</p>
+                        </div>
                     </div>
 
-                    <div class="price-row total-row">
-                        <span><strong>Total:</strong></span>
-                        <span id="totalPrice"><strong>RM 0.00</strong></span>
-                    </div>
-                </div>
-                <input type="hidden" name="total_price" id="totalPriceInput" value="0.00">
+                    <button type="submit" class="submit-btn">Book Now</button>
+                </form>
+            <?php endif; ?>
 
-                <div id="qrPaymentSection">
-                    <h3>Scan QR Code to Pay</h3>
-                    <div class="qr-code-container">
-                        <img src="assets/images/payment_qr.jpg" alt="Payment QR Code" class="qr-code-image"
-                            style="width: 200px; height: auto; border: 2px solid #4CAF50; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); transition: transform 0.2s;"
-                            onmouseover="this.style.transform='scale(1.05)'"
-                            onmouseout="this.style.transform='scale(1)'">
 
-                    </div>
-                    <div class="receipt-upload">
-                        <h4>Upload Payment Receipt</h4>
-                        <input type="file" name="payment_receipt" id="paymentReceipt" accept="image/*,.pdf"
-                            class="receipt-input" required>
-                        <div id="fileError" class="error-message"
-                            style="display: none; color: red; font-size: 0.8em; margin-top: 5px;"></div>
-                        <p class="receipt-note">Please upload your payment receipt (Image or PDF, max 5MB)</p>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn">Book Now</button>
-            </form>
+            <!-- Include SweetAlert2 -->
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <!-- Include booking.js -->
+            <script src="js/booking.js"></script>
 
             <script>
                 function validateGuests(input) {

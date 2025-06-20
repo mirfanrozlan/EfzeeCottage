@@ -26,22 +26,6 @@ $bookings_query = "SELECT b.*, h.name as homestay_name, u.name as guest_name, p.
                   LEFT JOIN payments p ON b.booking_id = p.booking_id 
                   ORDER BY b.check_in_date DESC";
 $bookings = $conn->query($bookings_query);
-
-// Get unread notifications
-$notifications = null;
-try {
-    // Check if notifications table exists
-    $table_check = $conn->query("SHOW TABLES LIKE 'notifications'");
-    if ($table_check->num_rows > 0) {
-        $notifications_query = "SELECT * FROM notifications WHERE read_status = 0 ORDER BY created_at DESC LIMIT 5";
-        $notifications = $conn->query($notifications_query);
-    } else {
-        error_log('Notifications table does not exist. Please run fix_notifications.sql');
-    }
-} catch (Exception $e) {
-    error_log('Error checking/fetching notifications: ' . $e->getMessage());
-    // Continue without notifications
-}
 ?>
 
 <!DOCTYPE html>
@@ -68,15 +52,6 @@ try {
                     <a href="admin.php" class="nav-link active mb-2">
                         <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                     </a>
-                    <a href="admin_bookings.php" class="nav-link mb-2">
-                        <i class="fas fa-calendar-alt me-2"></i> Bookings
-                    </a>
-                    <a href="admin_homestays.php" class="nav-link mb-2">
-                        <i class="fas fa-home me-2"></i> Homestays
-                    </a>
-                    <a href="admin_payments.php" class="nav-link mb-2">
-                        <i class="fas fa-money-bill me-2"></i> Payments
-                    </a>
                     <a href="admin_users.php" class="nav-link mb-2">
                         <i class="fas fa-users me-2"></i> Users
                     </a>
@@ -93,40 +68,6 @@ try {
             <div class="col-md-9 col-lg-10 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Dashboard</h2>
-                    <div class="dropdown">
-                        <button class="btn btn-light position-relative" data-bs-toggle="dropdown">
-                            <i class="fas fa-bell"></i>
-                            <?php if ($notifications && $notifications->num_rows > 0): ?>
-                                <span class="notification-badge"><?php echo $notifications->num_rows; ?></span>
-                            <?php endif; ?>
-                        </button>
-                        <div class="dropdown-menu notifications-dropdown">
-                            <?php
-                            if ($notifications instanceof mysqli_result && $notifications->num_rows > 0):
-                                try {
-                                    while ($notification = $notifications->fetch_assoc()): ?>
-                                        <div class="notification-item" data-id="<?php echo $notification['id']; ?>">
-                                            <strong><?php echo htmlspecialchars($notification['title']); ?></strong>
-                                            <p class="mb-0 small"><?php echo htmlspecialchars($notification['message']); ?></p>
-                                            <small
-                                                class="text-muted"><?php echo date('M j, Y H:i', strtotime($notification['created_at'])); ?></small>
-                                        </div>
-                                    <?php endwhile;
-                                } catch (Exception $e) {
-                                    error_log('Error processing notifications: ' . $e->getMessage());
-                                    echo '<div class="dropdown-item text-muted">Unable to load notifications</div>';
-                                }
-                            else: ?>
-                                <div class="dropdown-item text-muted">No new notifications</div>
-                                <?php if (!$notifications instanceof mysqli_result): ?>
-                                    <div class="dropdown-item text-danger border-top mt-2 pt-2">
-                                        <small><i class="fas fa-exclamation-triangle me-1"></i>Notifications system needs
-                                            setup</small>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Statistics Cards -->
@@ -200,14 +141,33 @@ try {
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-primary"
+                                            <?php
+                                            // Get user's phone number for WhatsApp button
+                                            $phone_query = "SELECT phone FROM users WHERE user_id = ?";
+                                            $phone_stmt = $conn->prepare($phone_query);
+                                            $phone_stmt->bind_param("i", $booking['user_id']);
+                                            $phone_stmt->execute();
+                                            $phone_result = $phone_stmt->get_result()->fetch_assoc();
+                                            $phone = $phone_result['phone'];
+
+                                            if ($phone) {
+                                                // Format phone number for WhatsApp
+                                                $whatsapp_number = preg_replace('/[^0-9]/', '', $phone);
+                                                if (substr($whatsapp_number, 0, 1) === '0') {
+                                                    $whatsapp_number = '6' . $whatsapp_number; // Add Malaysia country code
+                                                }
+                                            }
+                                            ?>
+                                            <button class="btn btn-sm btn-primary me-1"
                                                 onclick="viewBooking(<?php echo $booking['booking_id']; ?>)">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-success"
-                                                onclick="updateStatus(<?php echo $booking['booking_id']; ?>)">
-                                                <i class="fas fa-check"></i>
-                                            </button>
+                                            <?php if ($phone): ?>
+                                                <a href="https://wa.me/<?php echo $whatsapp_number; ?>" target="_blank"
+                                                    class="btn btn-sm btn-success">
+                                                    <i class="fab fa-whatsapp"></i>
+                                                </a>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
@@ -239,6 +199,7 @@ try {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');
@@ -266,7 +227,7 @@ try {
                                 break;
                         }
                         ?>
-                                                            {
+                                    {
                             title: '<?php echo addslashes($booking['guest_name']) . " - " . addslashes($booking['homestay_name']); ?>',
                             start: '<?php echo $booking['check_in_date']; ?>',
                             end: '<?php echo $booking['check_out_date']; ?>',
@@ -300,11 +261,37 @@ try {
         }
 
         function confirmPayment(bookingId) {
-            updateBookingStatus(bookingId, 'confirmed');
+            Swal.fire({
+                title: 'Confirm Payment',
+                text: 'Are you sure you want to confirm this payment?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, confirm it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    updateBookingStatus(bookingId, 'confirmed');
+                }
+            });
         }
 
         function rejectPayment(bookingId) {
-            updateBookingStatus(bookingId, 'cancelled');
+            Swal.fire({
+                title: 'Reject Payment',
+                text: 'Are you sure you want to reject this payment?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, reject it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    updateBookingStatus(bookingId, 'cancelled');
+                }
+            });
         }
 
         function updateBookingStatus(bookingId, status) {
@@ -318,28 +305,38 @@ try {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Booking status updated successfully');
-                        // Optionally refresh the calendar or update the UI
-                        location.reload(); // Reload the page to see the updated status
+                        Swal.fire({
+                            title: 'Success!',
+                            text: `Booking ${status === 'confirmed' ? 'confirmed' : 'rejected'} successfully`,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Close the modal
+                            const bookingModal = bootstrap.Modal.getInstance(document.getElementById('bookingModal'));
+                            if (bookingModal) {
+                                bookingModal.hide();
+                            }
+                            // Reload the page to update the calendar and booking list
+                            location.reload();
+                        });
                     } else {
-                        alert('Failed to update booking status: ' + data.message);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to update booking status: ' + data.message,
+                            icon: 'error'
+                        });
                     }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred while updating the booking status',
+                        icon: 'error'
+                    });
                 });
         }
 
-        // Mark notifications as read when clicked
-        document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', function () {
-                const notificationId = this.getAttribute('data-id');
-                fetch(`mark_notification_read.php?id=${notificationId}`, { method: 'POST' })
-                    .then(response => {
-                        if (response.ok) {
-                            this.classList.add('read'); // Optionally add a class to style read notifications
-                        }
-                    })
-                    .catch(error => console.error('Error marking notification as read:', error));
-            });
-        });
     </script>
 
 </body>

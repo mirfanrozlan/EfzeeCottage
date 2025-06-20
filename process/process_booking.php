@@ -9,7 +9,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 // Initialize response array
-$response = ['success' => false, 'message' => ''];
+$response = ['success' => false, 'message' => '', 'redirect' => ''];
 
 try {
     // Validate required fields
@@ -65,7 +65,7 @@ try {
     $checkOut = new DateTime($check_out_date);
     $interval = $checkIn->diff($checkOut);
     $nights = $interval->days;
-    if($nights <= 0) {
+    if ($nights <= 0) {
         throw new Exception("Invalid dates provided. Check-out must be after check-in.");
     }
 
@@ -162,8 +162,10 @@ try {
     // Commit transaction
     $conn->commit();
 
-    // Redirect back with success message
-    header('Location: ../mybooking.php');
+    $response['success'] = true;
+    $response['message'] = 'Booking submitted successfully! Please wait for email confirmation to be send to your email.';
+    $response['redirect'] = 'mybooking.php';
+    echo json_encode($response);
     exit;
 
 } catch (Exception $e) {
@@ -172,8 +174,9 @@ try {
         $conn->rollback();
     }
 
-    // Redirect back with error message
-    header('Location: ../mybooking.php?message=Error: ' . urlencode($e->getMessage()));
+    $response['success'] = false;
+    $response['message'] = 'Error: ' . $e->getMessage();
+    echo json_encode($response);
     exit;
 }
 ?>

@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    header('Location: deepseek.php');
+    header('Location: index.html');
     exit();
 }
 
@@ -17,10 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'update_review_status':
                 $review_id = $_POST['review_id'];
                 $status = $_POST['status'];
-                $admin_response = $_POST['admin_response'] ?? null;
 
-                $stmt = $conn->prepare("UPDATE reviews SET status = ?, admin_response = ? WHERE review_id = ?");
-                $stmt->bind_param("ssi", $status, $admin_response, $review_id);
+                $stmt = $conn->prepare("UPDATE reviews SET status = ? WHERE review_id = ?");
+                $stmt->bind_param("si", $status, $review_id);
                 
                 if ($stmt->execute()) {
                     $_SESSION['success_message'] = "Review status updated successfully.";
@@ -51,9 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get review statistics
 $stats = $conn->query("SELECT 
     COUNT(*) as total_reviews,
-    AVG(rating) as avg_rating,
+    AVG(ratings) as avg_ratings,
     COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_reviews,
-    COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_reviews
+    COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_reviews,
+    COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_reviews
 FROM reviews");
 $review_stats = $stats->fetch_assoc();
 
@@ -63,7 +63,6 @@ $query = "
     FROM reviews r 
     JOIN users u ON r.user_id = u.user_id 
     JOIN homestays h ON r.homestay_id = h.homestay_id 
-    ORDER BY r.created_at DESC
 ";
 
 $reviews = $conn->query($query);
@@ -113,24 +112,12 @@ $reviews = $conn->query($query);
                 <a href="admin.php" class="nav-link mb-2">
                     <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                 </a>
-                <a href="admin_bookings.php" class="nav-link mb-2">
-                    <i class="fas fa-calendar-alt me-2"></i> Bookings
-                </a>
-                <a href="admin_homestays.php" class="nav-link mb-2">
-                    <i class="fas fa-home me-2"></i> Homestays
-                </a>
-                <a href="admin_amenities.php" class="nav-link mb-2">
-                    <i class="fas fa-concierge-bell me-2"></i> Amenities
-                </a>
-                <a href="admin_payments.php" class="nav-link mb-2">
-                    <i class="fas fa-money-bill me-2"></i> Payments
-                </a>
                 <a href="admin_users.php" class="nav-link mb-2">
                     <i class="fas fa-users me-2"></i> Users
                 </a>
-                <!-- <a href="admin_reviews.php" class="nav-link active mb-2">
+                <a href="admin_reviews.php" class="nav-link active mb-2">
                     <i class="fas fa-star me-2"></i> Reviews
-                </a> -->
+                </a>
                 <a href="logout.php" class="nav-link mt-4 text-danger">
                     <i class="fas fa-sign-out-alt me-2"></i> Logout
                 </a>
@@ -161,7 +148,7 @@ $reviews = $conn->query($query);
 
             <!-- Statistics Cards -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col">
                     <div class="card stats-card bg-primary text-white">
                         <div class="card-body">
                             <h5 class="card-title">Total Reviews</h5>
@@ -169,16 +156,15 @@ $reviews = $conn->query($query);
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col">
                     <div class="card stats-card bg-warning text-dark">
                         <div class="card-body">
                             <h5 class="card-title">Average Rating</h5>
-                            <h3><?php echo number_format($review_stats['avg_rating'] ?? 0, 2); ?></h3>
-
+                            <h3><?php echo number_format($review_stats['avg_rating'] ?? 0, 2); ?> <i class="fas fa-star"></i></h3>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col">
                     <div class="card stats-card bg-success text-white">
                         <div class="card-body">
                             <h5 class="card-title">Approved Reviews</h5>
@@ -186,11 +172,19 @@ $reviews = $conn->query($query);
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col">
                     <div class="card stats-card bg-info text-white">
                         <div class="card-body">
                             <h5 class="card-title">Pending Reviews</h5>
                             <h3><?php echo $review_stats['pending_reviews']; ?></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card stats-card bg-danger text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Rejected Reviews</h5>
+                            <h3><?php echo $review_stats['rejected_reviews']; ?></h3>
                         </div>
                     </div>
                 </div>
@@ -209,7 +203,6 @@ $reviews = $conn->query($query);
                                     <th>Rating</th>
                                     <th>Review</th>
                                     <th>Status</th>
-                                    <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -221,7 +214,7 @@ $reviews = $conn->query($query);
                                         <td><?php echo htmlspecialchars($review['homestay_name']); ?></td>
                                         <td class="star-rating">
                                             <?php 
-                                                for ($i = 0; $i < $review['rating']; $i++) {
+                                                for ($i = 0; $i < $review['ratings']; $i++) {
                                                     echo '<i class="fas fa-star"></i>';
                                                 }
                                             ?>
@@ -233,11 +226,21 @@ $reviews = $conn->query($query);
                                             ?>
                                         </td>
                                         <td>
-                                            <span class="badge bg-<?php echo $review['status'] === 'approved' ? 'success' : 'warning'; ?>">
-                                                <?php echo ucfirst($review['status']); ?>
-                                            </span>
+                                            <span class="badge bg-<?php 
+                                switch($review['status']) {
+                                    case 'approved':
+                                        echo 'success';
+                                        break;
+                                    case 'rejected':
+                                        echo 'danger';
+                                        break;
+                                    default:
+                                        echo 'warning';
+                                }
+                            ?>">
+                                <?php echo ucfirst($review['status']); ?>
+                            </span>
                                         </td>
-                                        <td><?php echo date('Y-m-d', strtotime($review['created_at'])); ?></td>
                                         <td>
                                             <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#reviewModal<?php echo $review['review_id']; ?>">
                                                 <i class="fas fa-eye"></i> View
@@ -275,7 +278,7 @@ $reviews = $conn->query($query);
                                                             <label class="form-label">Rating</label>
                                                             <p class="form-control-static star-rating">
                                                                 <?php 
-                                                                    for ($i = 0; $i < $review['rating']; $i++) {
+                                                                    for ($i = 0; $i < $review['ratings']; $i++) {
                                                                         echo '<i class="fas fa-star"></i>';
                                                                     }
                                                                 ?>
@@ -291,13 +294,9 @@ $reviews = $conn->query($query);
                                                             <label class="form-label">Status</label>
                                                             <select name="status" class="form-select" required>
                                                                 <option value="pending" <?php echo $review['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                                                <option value="approved" <?php echo $review['status'] === 'approved' ? 'selected' : ''; ?>>Approved</option>
+                                                <option value="approved" <?php echo $review['status'] === 'approved' ? 'selected' : ''; ?>>Approved</option>
+                                                <option value="rejected" <?php echo $review['status'] === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
                                                             </select>
-                                                        </div>
-
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Admin Response (Optional)</label>
-                                                            <textarea name="admin_response" class="form-control" rows="3"><?php echo htmlspecialchars($review['admin_response'] ?? ''); ?></textarea>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">

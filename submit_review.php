@@ -1,7 +1,18 @@
 <?php
 session_start();
-require_once 'config.php';
-require_once 'send_notification.php';
+
+// Database connection (using same config as mybooking.php)
+$db_host = 'localhost';
+$db_user = 'root';
+$db_pass = '';
+$db_name = 'efzeecottage';
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+if ($conn->connect_error) {
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit;
+}
 
 // Set JSON content type
 header('Content-Type: application/json');
@@ -15,9 +26,12 @@ if (!isset($_SESSION['user'])) {
 // Validate input
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $homestay_id = filter_input(INPUT_POST, 'homestay_id', FILTER_VALIDATE_INT);
-    $rating = filter_input(INPUT_POST, 'rating', FILTER_VALIDATE_INT);
+    $rating = filter_input(INPUT_POST, 'ratings', FILTER_VALIDATE_INT);
     $comment = trim($_POST['comment'] ?? '');
     $user_id = $_SESSION['user']['user_id'];
+
+    // Debug: Log received data
+    error_log("Received data - homestay_id: $homestay_id, ratings: $rating, comment: $comment, user_id: $user_id");
 
     if (!$homestay_id || !$rating || !$comment) {
         echo json_encode(['success' => false, 'message' => 'Please fill in all required fields']);
@@ -34,16 +48,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         FROM bookings 
         WHERE user_id = ? 
         AND homestay_id = ? 
-        AND (status = 'completed' OR check_out_date <= NOW())
+        AND (status = 'completed' OR status = 'confirmed' OR check_out_date <= NOW())
         LIMIT 1");
+
+    if (!$bookingCheck) {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
+        exit;
+    }
+
     $bookingCheck->bind_param('ii', $user_id, $homestay_id);
     $bookingCheck->execute();
     $bookingResult = $bookingCheck->get_result();
 
     if ($bookingResult->num_rows === 0) {
         echo json_encode([
-            'success' => false, 
-            'message' => 'Reviews allowed after stay completion. Contact us if your stay has ended.'
+            'success' => false,
+            'message' => 'You can only review homestays after your stay is completed.'
         ]);
         exit;
     }
@@ -53,6 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Check if user has already reviewed this booking
     $reviewCheck = $conn->prepare("SELECT review_id FROM reviews WHERE booking_id = ? LIMIT 1");
+    if (!$reviewCheck) {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
+        exit;
+    }
+
     $reviewCheck->bind_param('i', $booking_id);
     $reviewCheck->execute();
 
@@ -65,56 +90,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->begin_transaction();
 
     try {
-        // Insert the review
-        $stmt = $conn->prepare("INSERT INTO reviews (booking_id, user_id, homestay_id, rating, comment, status) VALUES (?, ?, ?, ?, ?, 'pending')");
+        // Insert the review - make sure column names match exactly
+        $insertQuery = "INSERT INTO reviews (booking_id, user_id, homestay_id, ratings, comment, status) VALUES (?, ?, ?, ?, ?, 'pending')";
+        $stmt = $conn->prepare($insertQuery);
+
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+
         $stmt->bind_param('iiiis', $booking_id, $user_id, $homestay_id, $rating, $comment);
-        $stmt->execute();
+
+        if (!$stmt->execute()) {
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+
         $review_id = $stmt->insert_id;
-
-        // Update homestay rating
-        $update_rating = "UPDATE homestays h 
-                          SET rating = (SELECT AVG(rating) FROM reviews WHERE homestay_id = h.homestay_id) 
-                          WHERE homestay_id = ?";
-        $stmt = $conn->prepare($update_rating);
-        $stmt->bind_param('i', $homestay_id);
-        $stmt->execute();
-
-        // Get homestay name for notification
-        $query = "SELECT name FROM homestays WHERE homestay_id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param('i', $homestay_id);
-        $stmt->execute();
-        $homestay = $stmt->get_result()->fetch_assoc();
-
-        // Create notification for admin
-        $notification = new NotificationService($conn);
-        
-        // Prepare notification data
-        $notification_data = [
-            'review_id' => $review_id,
-            'booking_id' => $booking_id,
-            'homestay_name' => $homestay['name'],
-            'guest_name' => $_SESSION['user']['name'],
-            'rating' => $rating,
-            'comment' => $comment
-        ];
-
-        // Send notification to admin
-        $notification->sendNewReviewNotification($notification_data);
 
         // Commit transaction
         $conn->commit();
-        
+
         echo json_encode([
-            'success' => true, 
-            'message' => 'Review submitted successfully',
+            'success' => true,
+            'message' => 'Review submitted successfully and is pending approval',
             'review_id' => $review_id
         ]);
 
     } catch (Exception $e) {
         // Rollback transaction on error
         $conn->rollback();
-        
+
         error_log('Error submitting review: ' . $e->getMessage());
         echo json_encode([
             'success' => false,
@@ -122,9 +126,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
     }
 
-    $stmt->close();
+    if (isset($stmt)) {
+        $stmt->close();
+    }
 } else {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
 }
 
 $conn->close();
+?>

@@ -123,24 +123,12 @@ $users = $conn->query($query);
                 <a href="admin.php" class="nav-link mb-2">
                     <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                 </a>
-                <a href="admin_bookings.php" class="nav-link mb-2">
-                    <i class="fas fa-calendar-alt me-2"></i> Bookings
-                </a>
-                <a href="admin_homestays.php" class="nav-link mb-2">
-                    <i class="fas fa-home me-2"></i> Homestays
-                </a>
-                <a href="admin_amenities.php" class="nav-link mb-2">
-                    <i class="fas fa-concierge-bell me-2"></i> Amenities
-                </a>
-                <a href="admin_payments.php" class="nav-link mb-2">
-                    <i class="fas fa-money-bill me-2"></i> Payments
-                </a>
                 <a href="admin_users.php" class="nav-link active mb-2">
                     <i class="fas fa-users me-2"></i> Users
                 </a>
-                <!-- <a href="admin_reviews.php" class="nav-link mb-2">
+                <a href="admin_reviews.php" class="nav-link mb-2">
                     <i class="fas fa-star me-2"></i> Reviews
-                </a> -->
+                </a>
                 <a href="logout.php" class="nav-link mt-4 text-danger">
                     <i class="fas fa-sign-out-alt me-2"></i> Logout
                 </a>
@@ -243,9 +231,9 @@ $users = $conn->query($query);
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
                                             <?php if ($user['booking_count'] == 0): ?>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteUser(<?php echo $user['user_id']; ?>)">
+                                                <!-- <button class="btn btn-sm btn-danger" onclick="deleteUser(<?php echo $user['user_id']; ?>)">
                                                     <i class="fas fa-trash"></i> Delete
-                                                </button>
+                                                </button> -->
                                             <?php endif; ?>
                                         </td>
                                     </tr>
