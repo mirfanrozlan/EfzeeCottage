@@ -48,13 +48,38 @@ try {
     // Determine if the user is a first-time booker
     $is_first_time_booker = $booking_count === 0;
 
-    // Calculate final price with discount if returning customer
-    $final_price = $total_price;
-    $discount = 0; // Initialize discount
+    // Fetch homestay price from database
+    $stmt = $conn->prepare("SELECT price_per_night FROM homestays WHERE homestay_id = ?");
+    $stmt->bind_param("i", $homestay_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows === 0) {
+        throw new Exception("Invalid homestay selected");
+    }
+    $homestay = $result->fetch_assoc();
+    $price_per_night = floatval($homestay['price_per_night']);
+    $stmt->close();
+
+    // Calculate number of nights
+    $checkIn = new DateTime($check_in_date);
+    $checkOut = new DateTime($check_out_date);
+    $interval = $checkIn->diff($checkOut);
+    $nights = $interval->days;
+    if($nights <= 0) {
+        throw new Exception("Invalid dates provided. Check-out must be after check-in.");
+    }
+
+    // Calculate subtotal
+    $subtotal = $price_per_night * $nights;
+
+    // Apply discount for returning customers
+    $discount = 0;
     if (!$is_first_time_booker) {
         $discount = 20; // Apply RM20 discount for returning customers
-        $final_price = $total_price - $discount; // Adjust final price
     }
+
+    // Calculate final price (ensure it doesn't go below 0)
+    $final_price = max($subtotal - $discount, 0);
 
     // Insert booking with final price
     $stmt = $conn->prepare("INSERT INTO bookings (user_id, homestay_id, check_in_date, check_out_date, total_guests, status) 
@@ -63,7 +88,7 @@ try {
         throw new Exception("Prepare failed: " . $conn->error);
     }
 
-    $stmt->bind_param("iissid", $user_id, $homestay_id, $check_in_date, $check_out_date, $total_guests);
+    $stmt->bind_param("iissi", $user_id, $homestay_id, $check_in_date, $check_out_date, $total_guests);
     if (!$stmt->execute()) {
         throw new Exception("Execute failed: " . $stmt->error);
     }
