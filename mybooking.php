@@ -189,6 +189,34 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                         </div>
                     </div>
 
+                    <!-- Review Form -->
+                    <?php if ($booking['status'] === 'confirmed'): ?>
+                    <div class="review-section">
+                        <h3>Write a Review</h3>
+                        <form class="review-form" action="submit_review.php" method="POST">
+                            <input type="hidden" name="homestay_id" value="<?php echo $booking['homestay_id']; ?>">
+                            
+                            <div class="star-rating">
+                                <span>Rating:</span>
+                                <div class="stars">
+                                    <?php for ($i = 5; $i >= 1; $i--): ?>
+                                    <input type="radio" id="star<?php echo $i; ?>-<?php echo $booking['booking_id']; ?>" name="rating" value="<?php echo $i; ?>" required>
+                                    <label for="star<?php echo $i; ?>-<?php echo $booking['booking_id']; ?>" title="<?php echo $i; ?> stars"><i class="fas fa-star"></i></label>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <textarea name="comment" placeholder="Share your experience..." required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Review
+                            </button>
+                        </form>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="payment-info">
                         <div class="payment-title">
                             <i class="fas fa-credit-card"></i> Payment Information
