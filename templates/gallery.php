@@ -21,7 +21,8 @@
                 <div class="overlay">Spa-like Bathroom</div>
             </div>
             <div class="gallery-item">
-                <img src="https://images.unsplash.com/photo-1587714656374-fb3c9c3a4c82" alt="Dining Area">
+                <img src="https://images.unsplash.com/photo-1616486886892-ff366aa67ba4?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    alt="Dining Area">
                 <div class="overlay">Gourmet Dining Area</div>
             </div>
             <div class="gallery-item">

@@ -244,7 +244,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                         </div>
                     </div>
 
-                    <?php 
+                    <?php
                     // Check if booking is completed and if user has already reviewed
                     $review_query = "SELECT review_id, status FROM reviews WHERE booking_id = ? LIMIT 1";
                     $review_stmt = $conn->prepare($review_query);
@@ -258,17 +258,18 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                         $current_date = new DateTime();
                         $hours_difference = ($check_in_date->getTimestamp() - $current_date->getTimestamp()) / 3600;
                         $can_cancel = $hours_difference >= 24;
-                        $is_completed = $booking['status'] === 'completed';
+                        $is_completed = $booking['status'] === 'confirmed';
                         ?>
                         <div class="booking-actions">
                             <?php if ($is_completed): ?>
                                 <?php if (!$existing_review): ?>
-                                    <button type="button" class="btn btn-primary" onclick="openReviewModal(<?php echo $booking['booking_id']; ?>, '<?php echo htmlspecialchars($booking['homestay_name']); ?>', <?php echo $booking['homestay_id']; ?>)">
+                                    <button type="button" class="btn btn-primary"
+                                        onclick="openReviewModal(<?php echo $booking['booking_id']; ?>, '<?php echo htmlspecialchars($booking['homestay_name']); ?>', <?php echo $booking['homestay_id']; ?>)">
                                         <i class="fas fa-star"></i> Write Review
                                     </button>
                                 <?php else: ?>
                                     <div class="review-status">
-                                        <i class="fas fa-check-circle"></i> 
+                                        <i class="fas fa-check-circle"></i>
                                         Review <?php echo ucfirst($existing_review['status']); ?>
                                     </div>
                                 <?php endif; ?>
@@ -307,7 +308,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
             <form id="reviewForm">
                 <input type="hidden" id="booking_id" name="booking_id">
                 <input type="hidden" id="homestay_id" name="homestay_id">
-                
+
                 <div class="form-group">
                     <label>Homestay:</label>
                     <div id="homestayName" class="homestay-name"></div>
@@ -342,7 +343,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
         }
 
@@ -354,7 +355,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
             width: 80%;
             max-width: 500px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .close-modal {
@@ -383,8 +384,8 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
         }
 
         .star-rating label:hover,
-        .star-rating label:hover ~ label,
-        .star-rating input:checked ~ label {
+        .star-rating label:hover~label,
+        .star-rating input:checked~label {
             color: #ffc107;
         }
 
@@ -443,29 +444,29 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
         }
 
         // Handle Review Form Submission
-        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+        document.getElementById('reviewForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
-            
+
             fetch('submit_review.php', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Review submitted successfully!');
-                    closeReviewModal();
-                    location.reload(); // Reload page to update review status
-                } else {
-                    alert(data.message || 'Failed to submit review');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while submitting the review');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Review submitted successfully!');
+                        closeReviewModal();
+                        location.reload(); // Reload page to update review status
+                    } else {
+                        alert(data.message || 'Failed to submit review');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while submitting the review');
+                });
         });
 
         // Existing scripts
@@ -499,7 +500,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
         });
 
         // Close modal when clicking outside
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (event.target == document.getElementById('reviewModal')) {
                 closeReviewModal();
             }
