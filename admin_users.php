@@ -78,7 +78,7 @@ $query = "SELECT u.*,
           LEFT JOIN bookings b ON u.user_id = b.user_id 
           LEFT JOIN reviews r ON b.booking_id = r.booking_id 
           GROUP BY u.user_id 
-          ORDER BY u.created_at DESC";
+          ORDER BY u.created_at,'role' DESC";
 $users = $conn->query($query);
 ?>
 

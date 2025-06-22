@@ -66,9 +66,6 @@ $stmt->close();
             <?php endif; ?>
         </div>
 
-        <h1>Book Your Stay</h1>
-        <p class="subtitle">Reserve Your Perfect Getaway</p>
-
         <?php if (!$user_id): ?>
             <div id="loginMessage" class="login-message alert alert-warning">
                 <p><i class="fas fa-exclamation-circle"></i> Please login to complete your booking</p>
@@ -78,12 +75,11 @@ $stmt->close();
         <!-- Calendar and Homestay Selection -->
         <div class="calendar-container">
             <h3>Check Availability</h3>
-
             <!-- Homestay Selection -->
-            <form method="get" class="homestay-selector">
+            <div class="homestay-selector">
                 <div class="form-group">
                     <label for="homestay_id"><strong>Select Homestay:</strong></label>
-                    <select name="homestay_id" id="homestay_id" class="form-control" onchange="this.form.submit()">
+                    <select name="homestay_id" id="homestay_id" class="form-control">
                         <option value="">Choose a homestay...</option>
                         <?php foreach ($homestays as $homestay): ?>
                             <option value="<?= $homestay['homestay_id'] ?>"
@@ -97,100 +93,90 @@ $stmt->close();
                         <?php endforeach; ?>
                     </select>
                 </div>
-            </form>
+            </div>
 
-            <?php if ($selected_homestay_id): ?>
-                <?php
-                $today = new DateTime();
-                $month = $today->format('F Y');
-                $days_in_month = $today->format('t');
-                $first_day = new DateTime($today->format('Y-m-01'));
-                $starting_day = $first_day->format('w'); // 0-6 (Sun-Sat)
-                ?>
+            <div id="calendar-container" class="mt-4">
+                <!-- Calendar will be loaded here via AJAX -->
+            </div>
 
-                <!-- Calendar Grid -->
-                <div id="calendar" class="mt-4">
-                    <div class="calendar-grid">
-                        <h4 class="text-center"><?= $month ?></h4>
-                        <div class="calendar-header">
-                            <div>Sun</div>
-                            <div>Mon</div>
-                            <div>Tue</div>
-                            <div>Wed</div>
-                            <div>Thu</div>
-                            <div>Fri</div>
-                            <div>Sat</div>
-                        </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const homestaySelect = document.getElementById('homestay_id');
+                    const calendarContainer = document.getElementById('calendar-container');
 
-                        <div class="calendar-days">
-                            <?php
-                            // Empty cells for days before the first day of month
-                            for ($i = 0; $i < $starting_day; $i++) {
-                                echo "<div class='calendar-day empty'></div>";
-                            }
+                    // Function to load calendar
+                    function loadCalendar(homestayId) {
+                        if (!homestayId) {
+                            calendarContainer.innerHTML = `
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle"></i> Please select a homestay to view availability.
+                            </div>`;
+                            return;
+                        }
 
-                            // Calendar days
-                            for ($day = 1; $day <= $days_in_month; $day++) {
-                                $date_str = $today->format('Y-m-') . str_pad($day, 2, '0', STR_PAD_LEFT);
-                                $current_date = new DateTime($date_str);
-                                $is_booked = in_array($date_str, $booked_dates);
-                                $is_past = $current_date < new DateTime('today');
+                        // Show loading indicator
+                        calendarContainer.innerHTML = `
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>`;
 
-                                $classes = ['calendar-day'];
-                                if ($is_past) {
-                                    $classes[] = 'past';
-                                    $status = 'Past';
-                                } elseif ($is_booked) {
-                                    $classes[] = 'booked';
-                                    $status = 'Booked';
+                        // Fetch calendar data
+                        fetch(`/EfzeeCottage/get_calendar.php?homestay_id=${homestayId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    calendarContainer.innerHTML = `
+                                    <div class="alert alert-danger mt-3">
+                                        <i class="fas fa-exclamation-circle"></i> ${data.error}
+                                    </div>`;
                                 } else {
-                                    $classes[] = 'available';
-                                    $status = 'Available';
+                                    calendarContainer.innerHTML = data.calendar;
                                 }
+                            })
+                            .catch(error => {
+                                calendarContainer.innerHTML = `
+                                <div class="alert alert-danger mt-3">
+                                    <i class="fas fa-exclamation-circle"></i> Error loading calendar. Please try again.
+                                </div>`;
+                                console.error('Error:', error);
+                            });
+                    }
 
-                                echo "<div class='" . implode(' ', $classes) . "' 
-                                          data-date='" . $date_str . "' 
-                                          title='" . $status . "'>";
-                                echo $day;
-                                if ($is_booked && !$is_past) {
-                                    echo "<span class='booked-label'>Booked</span>";
-                                }
-                                echo "</div>";
-                            }
-                            ?>
-                        </div>
-                    </div>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i> Please select a homestay to view availability.
-                </div>
-            <?php endif; ?>
+                    // Load calendar when homestay selection changes
+                    homestaySelect.addEventListener('change', function () {
+                        loadCalendar(this.value);
+                    });
+
+                    // Load calendar for initial selection
+                    loadCalendar(homestaySelect.value);
+                });
+            </script>
 
 
             <?php if ($user_id): ?>
                 <!-- Booking Form -->
+                <?php
+                $today = date('Y-m-d');
+                $maxDate = date('Y-m-d', strtotime('+1 year'));
+
+                // Fetch existing bookings
+                $existingBookings = [];
+                $bookingQuery = "SELECT check_in_date, check_out_date FROM bookings WHERE status != 'cancelled'";
+                $bookingResult = $conn->query($bookingQuery);
+                while ($booking = $bookingResult->fetch_assoc()) {
+                    $existingBookings[] = [
+                        'start' => $booking['check_in_date'],
+                        'end' => $booking['check_out_date']
+                    ];
+                }
+                ?>
                 <form id="bookingForm" class="booking-form" method="POST" action="process/process_booking.php"
                     enctype="multipart/form-data">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>Check-in Date <span class="text-danger">*</span></label>
-                            <input type="date" name="check_in_date" id="checkInDate" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Check-out Date <span class="text-danger">*</span></label>
-                            <input type="date" name="check_out_date" id="checkOutDate" class="form-control" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Number of Guests</label>
-                            <input type="number" name="total_guests" id="totalGuests" min="1" max="10" required
-                                oninput="validateGuests(this)">
-                            <div id="guestError" class="error-message"
-                                style="display: none; color: red; font-size: 0.8em; margin-top: 5px;"></div>
-                        </div>
+                        <h1>Book Your Stay</h1>
+                        <p class="subtitle">Reserve Your Perfect Getaway</p>
                         <div class="form-group">
                             <label>Homestay</label>
                             <select name="homestay_id" id="homestaySelect" required>
@@ -208,6 +194,102 @@ $stmt->close();
                                     </option>
                                 <?php endwhile; ?>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Check-in Date <span class="text-danger">*</span></label>
+                            <input type="date" name="check_in_date" id="checkInDate" class="form-control" required
+                                min="<?php echo $today; ?>" max="<?php echo $maxDate; ?>">
+                        </div>
+                        <div class="form-group">
+                            <label>Check-out Date <span class="text-danger">*</span></label>
+                            <input type="date" name="check_out_date" id="checkOutDate" class="form-control" required
+                                min="<?php echo $today; ?>" max="<?php echo $maxDate; ?>">
+                        </div>
+                    </div>
+                    <script>
+                        const existingBookings = <?php echo json_encode($existingBookings); ?>;
+
+                        function isDateBooked(date) {
+                            return existingBookings.some(booking => {
+                                const checkDate = new Date(date);
+                                const startDate = new Date(booking.start);
+                                const endDate = new Date(booking.end);
+                                return checkDate >= startDate && checkDate <= endDate;
+                            });
+                        }
+
+                        document.getElementById('checkInDate').addEventListener('change', function () {
+                            const checkInDate = this.value;
+                            const checkOutInput = document.getElementById('checkOutDate');
+
+                            if (isDateBooked(checkInDate)) {
+                                this.value = '';
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Date Unavailable',
+                                    text: 'This date is already booked. Please select another date.',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                                return;
+                            }
+
+                            checkOutInput.min = checkInDate;
+                            if (checkOutInput.value && checkOutInput.value <= checkInDate) {
+                                checkOutInput.value = '';
+                            }
+                        });
+
+                        document.getElementById('checkOutDate').addEventListener('change', function () {
+                            const checkInDate = document.getElementById('checkInDate').value;
+                            const checkOutDate = this.value;
+
+                            if (!checkInDate) {
+                                this.value = '';
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Check-in Date Required',
+                                    text: 'Please select a check-in date first.',
+                                    confirmButtonColor: '#ffc107'
+                                });
+                                return;
+                            }
+
+                            if (isDateBooked(checkOutDate)) {
+                                this.value = '';
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Date Unavailable',
+                                    text: 'This date is already booked. Please select another date.',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                                return;
+                            }
+
+                            // Check if any date between check-in and check-out is booked
+                            const start = new Date(checkInDate);
+                            const end = new Date(checkOutDate);
+                            for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+                                if (isDateBooked(d.toISOString().split('T')[0])) {
+                                    this.value = '';
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Date Range Unavailable',
+                                        text: 'Some dates in your selected range are already booked. Please select different dates.',
+                                        confirmButtonColor: '#dc3545'
+                                    });
+                                    return;
+                                }
+                            }
+                        });
+                    </script>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Number of Guests</label>
+                            <input type="number" name="total_guests" id="totalGuests" min="1" max="10" required
+                                oninput="validateGuests(this)">
+                            <div id="guestError" class="error-message"
+                                style="display: none; color: red; font-size: 0.8em; margin-top: 5px;"></div>
                         </div>
                     </div>
 
@@ -265,6 +347,7 @@ $stmt->close();
 
             <!-- Include SweetAlert2 -->
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <link rel="stylesheet" href="../css/style.css">
             <!-- Include booking.js -->
             <script src="js/booking.js"></script>
 

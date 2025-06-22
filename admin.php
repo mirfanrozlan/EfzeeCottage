@@ -40,6 +40,24 @@ $bookings = $conn->query($bookings_query);
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="css/admin.css">
 </head>
+<style>
+    .sidebar {
+        min-height: 100vh;
+        background-color: #343a40;
+    }
+
+    .nav-link {
+        color: #fff;
+    }
+
+    .nav-link:hover {
+        background-color: #495057;
+    }
+
+    .nav-link.active {
+        background-color: #0d6efd;
+    }
+</style>
 
 <body>
 
@@ -210,6 +228,12 @@ $bookings = $conn->query($bookings_query);
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
+                buttonText: {
+                    today: 'Today',
+                    month: 'Month',
+                    week: 'Week',
+                    day: 'Day'
+                },
                 events: [
                     <?php
                     $bookings->data_seek(0);
@@ -227,7 +251,7 @@ $bookings = $conn->query($bookings_query);
                                 break;
                         }
                         ?>
-                                    {
+                                                                            {
                             title: '<?php echo addslashes($booking['guest_name']) . " - " . addslashes($booking['homestay_name']); ?>',
                             start: '<?php echo $booking['check_in_date']; ?>',
                             end: '<?php echo $booking['check_out_date']; ?>',

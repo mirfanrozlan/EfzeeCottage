@@ -90,9 +90,12 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="css/mybooking.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/navbar.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -253,8 +256,20 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                                 <form action="mybooking.php" method="POST">
                                     <input type="hidden" name="action" value="cancel_booking">
                                     <input type="hidden" name="booking_id" value="<?php echo $booking['booking_id']; ?>">
-                                    <button type="submit" class="btn btn-danger"
-                                        onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                    <button type="submit" class="btn btn-danger" onclick="event.preventDefault(); Swal.fire({
+                                            title: 'Cancel Booking',
+                                            text: 'Are you sure you want to cancel this booking?',
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#d33',
+                                            cancelButtonColor: '#3085d6',
+                                            confirmButtonText: 'Yes, cancel it!',
+                                            cancelButtonText: 'No, keep it'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                this.form.submit();
+                                            }
+                                        })">
                                         <i class="fas fa-times-circle"></i> Cancel Booking
                                     </button>
                                 </form>
@@ -289,23 +304,106 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
                     <input type="hidden" id="booking_id" name="booking_id">
                     <input type="hidden" id="homestay_id" name="homestay_id">
 
-                    <div class="form-group">
-                        <label id="ratingLabel">Rating:</label>
-                        <div class="star-rating" role="group" aria-labelledby="ratingLabel">
-                            <div class="stars">
-                                <?php for ($i = 5; $i >= 1; $i--): ?>
-                                    <input type="radio" id="modalStar<?php echo $i; ?>" name="ratings"
-                                        value="<?php echo $i; ?>" required
-                                        aria-label="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">
-                                    <label for="modalStar<?php echo $i; ?>"
-                                        title="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">
-                                        <i class="fas fa-star"></i>
-                                    </label>
-                                <?php endfor; ?>
+                    <style>
+                        .star-rating {
+                            display: inline-flex;
+                            align-items: center;
+                        }
+
+                        .star-rating .stars {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            flex-direction: row-reverse;
+                        }
+
+                        .star-rating input[type="radio"] {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            opacity: 0;
+                            cursor: pointer;
+                            z-index: 2;
+                        }
+
+                        .star-rating .star-label {
+                            background-color: transparent;
+                            border: 2px solid transparent;
+                            transition: all 0.2s ease;
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 50%;
+                            padding: 0.5rem;
+                            position: relative;
+                            z-index: 1;
+                        }
+
+                        .star-rating .star-label i {
+                            transition: all 0.2s ease;
+                            opacity: 0.5;
+                            font-size: 1.25rem;
+                            color: #6c757d;
+                        }
+
+                        .star-rating input:checked+.star-label i,
+                        .star-rating input:checked~.star-wrapper .star-label i,
+                        .star-rating .star-wrapper:hover .star-label i,
+                        .star-rating .star-wrapper:hover~.star-wrapper .star-label i,
+                        .star-rating .star-wrapper:has(input:checked)~.star-wrapper .star-label i {
+                            opacity: 1;
+                            color: #ffc107;
+                        }
+
+                        .rating-feedback {
+                            font-size: 0.875rem;
+                            opacity: 0;
+                            transition: opacity 0.2s ease;
+                            min-width: 90px;
+                            margin-left: 1rem;
+                        }
+
+                        .rating-text {
+                            font-size: 0.875rem;
+                            color: #6c757d;
+                            margin-top: 0.5rem;
+                            min-height: 20px;
+                        }
+
+                        .star-rating .star-wrapper {
+                            cursor: pointer;
+                            transform: scale(1);
+                            transition: transform 0.2s ease;
+                            position: relative;
+                        }
+                    </style>
+
+                    <div class="form-group mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <label id="ratingLabel" class="mb-0 fw-bold">Rating:</label>
+                            <div class="star-rating d-flex align-items-center" role="group"
+                                aria-labelledby="ratingLabel">
+                                <div class="stars d-flex align-items-center gap-2">
+                                    <?php for ($i = 5; $i >= 1; $i--): ?>
+                                        <div class="star-wrapper">
+                                            <input type="radio" id="modalStar<?php echo $i; ?>" name="ratings"
+                                                value="<?php echo $i; ?>" required class="d-none"
+                                                aria-label="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">
+                                            <label for="modalStar<?php echo $i; ?>"
+                                                class="star-label d-flex align-items-center justify-content-center m-0"
+                                                data-bs-toggle="tooltip"
+                                                title="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">
+                                                <i class="fas fa-star"></i>
+                                            </label>
+                                        </div>
+                                    <?php endfor; ?>
+                                </div>
+                                <div class="rating-feedback ms-3 text-muted"></div>
                             </div>
-                            <div class="rating-text" aria-live="polite"></div>
-                            <div class="invalid-feedback">Please select a rating.</div>
                         </div>
+                        <div class="rating-text small text-muted mt-2" aria-live="polite"></div>
+                        <div class="invalid-feedback">Please select a rating.</div>
                     </div>
 
                     <div class="form-group">
@@ -335,6 +433,7 @@ $bookings = $result->fetch_all(MYSQLI_ASSOC);
     </div>
 
 
+    <script src="js/main.php"></script>
 
     <script>
         // Review Modal Functions

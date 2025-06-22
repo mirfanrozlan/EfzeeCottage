@@ -71,6 +71,29 @@ $payment_date = $booking['payment_date'] ? date('M j, Y', strtotime($booking['pa
                     <th>Total Guests:</th>
                     <td><?php echo $booking['total_guests']; ?></td>
                 </tr>
+                <tr>
+                    <td colspan="2" rowspan="2">
+                        <?php if ($booking['receipt_path']): ?>
+                            <div class="mt-3">
+                                <h6>Payment Receipt</h6>
+                                <div class="receipt-preview">
+                                    <?php if (pathinfo($booking['receipt_path'], PATHINFO_EXTENSION) === 'pdf'): ?>
+                                        <a href="<?php echo htmlspecialchars($booking['receipt_path']); ?>"
+                                            class="btn btn-sm btn-primary" target="_blank">
+                                            <i class="fas fa-file-pdf"></i> View Receipt
+                                        </a>
+                                    <?php else: ?>
+                                        <img src="<?php echo htmlspecialchars($booking['receipt_path']); ?>" class="img-fluid"
+                                            style="max-height: 200px;">
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                </tr>
             </table>
         </div>
 
@@ -99,7 +122,18 @@ $payment_date = $booking['payment_date'] ? date('M j, Y', strtotime($booking['pa
                 </tr>
                 <tr>
                     <th>Payment Method:</th>
-                    <td><?php echo $booking['payment_method'] ? ucfirst($booking['payment_method']) : 'Not selected'; ?>
+                    <td>
+                        <?php
+                        if ($booking['payment_method'] == 'qr_code') {
+                            $qrData = 'Payment by QR Code'; // You can replace this with any dynamic data
+                            echo "QR Code";
+
+                        } elseif ($booking['payment_method']) {
+                            echo ucfirst($booking['payment_method']);
+                        } else {
+                            echo 'Not selected';
+                        }
+                        ?>
                     </td>
                 </tr>
                 <tr>
@@ -108,29 +142,14 @@ $payment_date = $booking['payment_date'] ? date('M j, Y', strtotime($booking['pa
                 </tr>
             </table>
 
+
+
             <div class="mt-3">
                 <button class="btn btn-success" onclick="confirmPayment(<?php echo $booking['booking_id']; ?>)">Confirm
                     Payment</button>
                 <button class="btn btn-danger" onclick="rejectPayment(<?php echo $booking['booking_id']; ?>)">Reject
                     Payment</button>
             </div>
-
-            <?php if ($booking['receipt_path']): ?>
-                <div class="mt-3">
-                    <h6>Payment Receipt</h6>
-                    <div class="receipt-preview">
-                        <?php if (pathinfo($booking['receipt_path'], PATHINFO_EXTENSION) === 'pdf'): ?>
-                            <a href="<?php echo htmlspecialchars($booking['receipt_path']); ?>" class="btn btn-sm btn-primary"
-                                target="_blank">
-                                <i class="fas fa-file-pdf"></i> View Receipt
-                            </a>
-                        <?php else: ?>
-                            <img src="<?php echo htmlspecialchars($booking['receipt_path']); ?>" class="img-fluid"
-                                style="max-height: 200px;">
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
         </div>
     </div>
 </div>

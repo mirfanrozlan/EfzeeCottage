@@ -51,7 +51,7 @@ try {
     }
 
     // Create notification
-    $notification = new NotificationService($conn);
+    // $notification = new NotificationService($conn);
 
     // Prepare notification data
     $notification_data = [
