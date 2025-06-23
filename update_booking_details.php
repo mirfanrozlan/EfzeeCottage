@@ -85,7 +85,7 @@ if ($stmt->affected_rows > 0) {
             <body style='font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa;'>
                 <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
                     <div style='text-align: center; margin-bottom: 30px;'>
-                        // <img src='https://efzeecottage.com/image/logo.png' alt='EFZEE COTTAGE' style='max-width: 200px; height: auto;'>
+                        <img src='https://efzeecottage.com/image/logo.png' alt='EFZEE COTTAGE' style='max-width: 200px; height: auto;'>
                     </div>
                     <div style='border-left: 4px solid #f44336; padding-left: 15px; margin-bottom: 30px;'>
                         <h2 style='color: #c62828; margin: 0; font-size: 24px;'>Payment Status Update</h2>
