@@ -659,12 +659,12 @@ a {
 
 #about {
     background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-        url('https://images.unsplash.com/photo-1554469384-e58f16f4d6f7');
+        url('https://images.unsplash.com/photo-1560448204-603b3fc33ddc');
 }
 
 #gallery {
     background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-        url('https://images.unsplash.com/photo-1560448204-603b3fc33ddc');
+        url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267');
 }
 
 #booking {
@@ -674,7 +674,10 @@ a {
 
 #reviews {
     background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-        url('https://images.unsplash.com/photo-1696217612904-64c78f5c588a');
+        url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267');
+        background-size: cover;         /* Ensures it covers the container */
+        background-position: center;    /* Centers the image */
+        background-repeat: no-repeat;   /* Prevents tiling */
 }
 
 /* About Section Features */
@@ -1431,7 +1434,7 @@ html {
 }
 
 .footer-section h3 {
-    color: #f4b400;
+    color: rgba(27, 139, 180, 0.9);
     font-size: 18px;
     margin-bottom: 15px;
     text-transform: uppercase;
@@ -1458,13 +1461,13 @@ html {
 }
 
 .footer-section ul li a:hover {
-    color: #f4b400;
+    color: rgba(27, 139, 180, 0.9);
 }
 
 /* Icons */
 .footer-section i {
     margin-right: 10px;
-    color: #f4b400;
+    color: rgba(27, 139, 180, 0.9);
 }
 
 /* Social Links */
@@ -1477,7 +1480,7 @@ html {
 }
 
 .social-links a:hover {
-    color: #f4b400;
+    color: rgba(27, 139, 180, 0.9);
 }
 
 /* Footer Bottom */

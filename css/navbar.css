@@ -12,12 +12,16 @@
 
 .nav-brand {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
+    overflow: hidden;
+    
 }
 
 .nav-logo {
-    width: 15%;
+    width: 12%;
     height: auto;
+    float: inline-end;
+    pointer-events: none;
 }
 
 .nav-links {

@@ -23,36 +23,36 @@ if (session_status() === PHP_SESSION_NONE) {
         <a href="homepage.php#booking">Book Now</a>
         <a href="homepage.php#reviews">Reviews</a>
         <?php if (isset($_SESSION['user'])): ?>
-                    <a href="mybooking.php" class="active">My Bookings</a>
+            <a href="mybooking.php" class="active">My Bookings</a>
         <?php endif; ?>
         <!-- <a href="#reviews">Reviews</a> -->
         <div class="nav-user-menu">
             <?php if (!isset($_SESSION['user'])): ?>
-                        <button id="loginBtn" class="nav-button"><i class="fas fa-user"></i> Login / Sign Up</button>
+                <button id="loginBtn" class="nav-button"><i class="fas fa-user"></i> Login / Sign Up</button>
             <?php else: ?>
-                        <div class="user-dropdown">
-                            <button class="nav-button user-button">
-                                <i class="fas fa-user-circle"></i>Account
-                            </button>
-                            <div class="dropdown-content">
-                                <div class="user-info">
-                                    <i class="fas fa-user-circle profile-icon"></i>
-                                    <div class="user-details">
-                                        <span class="user-name"><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
-                                        <span class="user-email"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></span>
-                                    </div>
-                                </div>
-                                <div class="dropdown-divider"></div>
-                                <div class="dropdown-divider"></div>
-                                <form id="logoutForm" action="logout.php" method="POST">
-                                    <button type="submit" class="dropdown-btn">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>Logout</span>
-                                        <span class="item-description">Sign out of your account</span>
-                                    </button>
-                                </form>
+                <div class="user-dropdown">
+                    <button class="nav-button user-button">
+                        <i class="fas fa-user-circle"></i>Account
+                    </button>
+                    <div class="dropdown-content">
+                        <div class="user-info">
+                            <i class="fas fa-user-circle profile-icon"></i>
+                            <div class="user-details">
+                                <span class="user-name"><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
+                                <span class="user-email"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></span>
                             </div>
                         </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-divider"></div>
+                        <form id="logoutForm" action="logout.php" method="POST">
+                            <button type="submit" class="dropdown-btn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                                <span class="item-description">Sign out of your account</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -91,9 +91,9 @@ if (session_status() === PHP_SESSION_NONE) {
     });
 </script>
 <!-- Active Section Indicator -->
-<div class="active-section">
+<!-- <div class="active-section">
     <a href="#home" class="active" data-section="Home"></a>
     <a href="#about" data-section="About"></a>
     <a href="#gallery" data-section="Gallery"></a>
     <a href="#booking" data-section="Booking"></a>
-</div>
+</div> -->
