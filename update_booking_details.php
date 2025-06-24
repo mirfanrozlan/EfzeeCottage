@@ -93,9 +93,36 @@ if ($stmt->affected_rows > 0) {
             $message .= '<div style="margin-top:24px;color:#bbb;font-size:0.9em;text-align:center;">&copy; ' . date('Y') . ' EFZEE COTTAGE. All rights reserved.</div>';
             $message .= '</div></div></div>';
         } elseif ($status === 'cancelled') {
-            $subject = 'Booking Payment Rejected';
-            $message = "Dear $name,<br><br>Unfortunately, your booking payment has been rejected. Please contact us for further assistance.<br><br>Best regards,<br>EFZEE COTTAGE";
+            $subject = 'Booking Payment Status Update ❗';
+            $message = "
+            <html>
+            <body style='font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa;'>
+                <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
+                    <div style='text-align: center; margin-bottom: 30px;'>
+                        <img src='https://efzeecottage.com/image/logo.png' alt='EFZEE COTTAGE' style='max-width: 200px; height: auto;'>
+                    </div>
+                    <div style='border-left: 4px solid #f44336; padding-left: 15px; margin-bottom: 30px;'>
+                        <h2 style='color: #c62828; margin: 0; font-size: 24px;'>Payment Status Update</h2>
+                        <p style='color: #666; margin: 5px 0 0;'>Important Information About Your Booking</p>
+                    </div>
+                    <p style='color: #333; line-height: 1.6; margin-bottom: 20px;'>Dear <strong>$name</strong>,</p>
+                    <p style='color: #333; line-height: 1.6; margin-bottom: 20px;'>We regret to inform you that your booking payment could not be confirmed at this time. Our team is ready to assist you with resolving any payment issues.</p>
+                    <div style='background-color: #fef8f8; border: 1px solid #ffebee; border-radius: 8px; padding: 20px; margin: 30px 0;'>
+                        <p style='color: #c62828; margin: 0; font-size: 16px;'>📞 Contact Us</p>
+                        <p style='color: #666; margin: 10px 0 0; font-size: 14px;'>Phone: +60 12-345 6789<br>Email: support@efzeecottage.com</p>
+                    </div>
+                    <div style='margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;'>
+                        <p style='color: #666; margin: 0; font-size: 14px;'>Best regards,<br><strong>EFZEE COTTAGE Team</strong></p>
+                    </div>
+                    <div style='margin-top: 30px; text-align: center; font-size: 12px; color: #999;'>
+                        <p style='margin: 5px 0;'>This is an automated message, please do not reply directly to this email.</p>
+                        <p style='margin: 5px 0;'>© 2024 EFZEE COTTAGE. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
         }
+
 
         if ($subject && $message) {
             $mail = new PHPMailer\PHPMailer\PHPMailer(true);
