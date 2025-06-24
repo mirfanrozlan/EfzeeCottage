@@ -18,6 +18,34 @@ FROM bookings");
 $stmt->execute();
 $booking_stats = $stmt->get_result()->fetch_assoc();
 
+// Handle add homestay form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_homestay'])) {
+    $name = trim($_POST['name']);
+    $description = trim($_POST['description']);
+    $address = trim($_POST['address']);
+    $price_per_night = floatval($_POST['price_per_night']);
+    $max_guests = intval($_POST['max_guests']);
+    $bedrooms = intval($_POST['bedrooms']);
+    $bathrooms = intval($_POST['bathrooms']);
+    $status = trim($_POST['status']);
+    
+    if ($name && $description && $address && $price_per_night > 0 && $max_guests > 0 && $bedrooms >= 0 && $bathrooms >= 0 && $status) {
+        $stmt = $conn->prepare("INSERT INTO homestays (name, description, address, price_per_night, max_guests, bedrooms, bathrooms, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssdiiss", $name, $description, $address, $price_per_night, $max_guests, $bedrooms, $bathrooms, $status);
+        if ($stmt->execute()) {
+            $homestay_success = "Homestay added successfully.";
+        } else {
+            $homestay_error = "Failed to add homestay.";
+        }
+        $stmt->close();
+    } else {
+        $homestay_error = "Please fill in all fields correctly.";
+    }
+}
+
+// Fetch all homestays
+$homestays = $conn->query("SELECT * FROM homestays ORDER BY homestay_id DESC");
+
 // Get recent bookings for calendar
 $bookings_query = "SELECT b.*, h.name as homestay_name, u.name as guest_name, p.status as payment_status 
                   FROM bookings b 
@@ -69,6 +97,9 @@ $bookings = $conn->query($bookings_query);
                 <div class="nav flex-column">
                     <a href="admin.php" class="nav-link active mb-2">
                         <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                    <a href="admin_homestays.php" class="nav-link mb-2">
+                        <i class="fas fa-home me-2"></i> Homestays
                     </a>
                     <a href="admin_users.php" class="nav-link mb-2">
                         <i class="fas fa-users me-2"></i> Users
@@ -132,8 +163,11 @@ $bookings = $conn->query($bookings_query);
                 <!-- Recent Bookings -->
                 <div class="booking-list">
                     <h4 class="mb-4">Recent Bookings</h4>
+                    <div class="mb-3">
+                        <input type="text" id="bookingSearchInput" class="form-control" placeholder="Search bookings...">
+                    </div>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table" id="bookingTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -360,6 +394,16 @@ $bookings = $conn->query($bookings_query);
                     });
                 });
         }
+
+        // Booking table search filter
+        document.getElementById('bookingSearchInput').addEventListener('keyup', function() {
+            var input = this.value.toLowerCase();
+            var rows = document.querySelectorAll('#bookingTable tbody tr');
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
+        });
 
     </script>
 

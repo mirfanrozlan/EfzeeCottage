@@ -123,7 +123,7 @@ $stmt->close();
                         </div>`;
 
                         // Fetch calendar data
-                        fetch(`/EfzeeCottage/get_calendar.php?homestay_id=${homestayId}`)
+                        fetch(`/EfzeeCottage-1/get_calendar.php?homestay_id=${homestayId}`)
                             .then(response => response.json())
                             .then(data => {
                                 if (data.error) {

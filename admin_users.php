@@ -123,6 +123,9 @@ $users = $conn->query($query);
                 <a href="admin.php" class="nav-link mb-2">
                     <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                 </a>
+                <a href="admin_homestays.php" class="nav-link mb-2">
+                    <i class="fas fa-home me-2"></i> Homestays
+                </a>
                 <a href="admin_users.php" class="nav-link active mb-2">
                     <i class="fas fa-users me-2"></i> Users
                 </a>
@@ -196,8 +199,11 @@ $users = $conn->query($query);
             <!-- Users Table -->
             <div class="card shadow">
                 <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" id="userSearchInput" class="form-control" placeholder="Search users...">
+                    </div>
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped" id="usersTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -321,6 +327,16 @@ function deleteUser(userId) {
     document.getElementById('deleteUserId').value = userId;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
+
+// Users table search filter
+document.getElementById('userSearchInput').addEventListener('keyup', function() {
+    var input = this.value.toLowerCase();
+    var rows = document.querySelectorAll('#usersTable tbody tr');
+    rows.forEach(function(row) {
+        var text = row.textContent.toLowerCase();
+        row.style.display = text.includes(input) ? '' : 'none';
+    });
+});
 </script>
 </body>
 </html>
